@@ -95,7 +95,8 @@ def find_best_hyperparameters(X, y, hyperparameter_grid, k=10):
     return results_df
 
 def evaluate_best_setting_trials(X, y, params, repeats=100, test_size=0.2):
-    repeat_accuracies = []
+    train_accuracies = []
+    test_accuracies = []
 
     for seed in range(repeats):
         X_train, X_test, y_train, y_test = train_test_split(
@@ -113,13 +114,19 @@ def evaluate_best_setting_trials(X, y, params, repeats=100, test_size=0.2):
             max_depth=params["max_depth"],
         )
         tree.fit(X_train, y_train)
-        y_pred = tree.predict(X_test)
+        y_train_pred = tree.predict(X_train)
+        y_test_pred = tree.predict(X_test)
 
-        fold_accuracy, _ = calculate_metrics(y_test, y_pred)
-        repeat_accuracies.append(float(fold_accuracy))
-        print(f"    Trial {seed + 1}: Accuracy = {repeat_accuracies[-1]:.4f}")
+        train_accuracy, _ = calculate_metrics(y_train, y_train_pred)
+        test_accuracy, _ = calculate_metrics(y_test, y_test_pred)
+        train_accuracies.append(float(train_accuracy))
+        test_accuracies.append(float(test_accuracy))
+        print(
+            f"    Trial {seed + 1}: Train Accuracy = {train_accuracies[-1]:.4f}, "
+            f"Test Accuracy = {test_accuracies[-1]:.4f}"
+        )
 
-    return np.array(repeat_accuracies)
+    return np.array(train_accuracies), np.array(test_accuracies)
 
 
 datasets_to_run = {
@@ -178,7 +185,7 @@ for dataset_name, config in datasets_to_run.items():
     print(f"\nBest Hyperparameters for {dataset_name}: {best_params}")
 
     print(f"\n--- Repeated Trials for Best Hyperparameter Setting ({dataset_name}) ---")
-    repeat_acc = evaluate_best_setting_trials(
+    train_acc, test_acc = evaluate_best_setting_trials(
         X_raw,
         y_raw,
         best_params,
@@ -186,26 +193,47 @@ for dataset_name, config in datasets_to_run.items():
         test_size=0.2,
     )
 
-    test_mean = np.mean(repeat_acc)
-    test_std = np.std(repeat_acc)
-    test_min = np.min(repeat_acc)
-    test_max = np.max(repeat_acc)
+    train_mean = np.mean(train_acc)
+    train_std = np.std(train_acc)
+    train_min = np.min(train_acc)
+    train_max = np.max(train_acc)
+    test_mean = np.mean(test_acc)
+    test_std = np.std(test_acc)
+    test_min = np.min(test_acc)
+    test_max = np.max(test_acc)
     
-    print(f"Average accuracy over repeated trials: {test_mean:.4f}")
-    print(f"Std accuracy over repeated trials: {test_std:.4f}")
-    print(f"Minimum accuracy: {test_min:.4f}")
-    print(f"Maximum accuracy: {test_max:.4f}")
+    print(f"Average training accuracy over repeated trials: {train_mean:.4f}")
+    print(f"Std training accuracy over repeated trials: {train_std:.4f}")
+    print(f"Minimum training accuracy: {train_min:.4f}")
+    print(f"Maximum training accuracy: {train_max:.4f}")
+    print(f"Average testing accuracy over repeated trials: {test_mean:.4f}")
+    print(f"Std testing accuracy over repeated trials: {test_std:.4f}")
+    print(f"Minimum testing accuracy: {test_min:.4f}")
+    print(f"Maximum testing accuracy: {test_max:.4f}")
 
     plt.figure(figsize=(8, 5))
-    plt.hist(repeat_acc, bins=20, color="skyblue", edgecolor="black")
+    plt.hist(train_acc, bins=20, color="lightgreen", edgecolor="black")
+    plt.xlabel("Accuracy")
+    plt.ylabel("Accuracy Frequency on Training Data")
+    plt.title(f"Training Accuracy Histogram ({dataset_name}), criterion = {best_params['criterion']}, heuristic = {best_params['heuristic']}\n"
+              f"Mean = {train_mean:.4f}, Std = {train_std:.4f}, "
+              f"Min = {train_min:.4f}, Max = {train_max:.4f}")
+    plt.tight_layout()
+    train_accuracy_hist_filename = os.path.join(images_dir, f"decision_tree_{dataset_name.lower()}_training_accuracy_hist.png")
+    plt.savefig(train_accuracy_hist_filename)
+    print(f"Saved training accuracy histogram to: {train_accuracy_hist_filename}")
+    plt.close()
+
+    plt.figure(figsize=(8, 5))
+    plt.hist(test_acc, bins=20, color="skyblue", edgecolor="black")
     plt.xlabel("Accuracy")
     plt.ylabel("Accuracy Frequency on Testing Data")
     plt.title(f"Testing Accuracy Histogram ({dataset_name}), criterion = {best_params['criterion']}, heuristic = {best_params['heuristic']}\n"
               f"Mean = {test_mean:.4f}, Std = {test_std:.4f}, "
               f"Min = {test_min:.4f}, Max = {test_max:.4f}")
     plt.tight_layout()
-    accuracy_hist_filename = os.path.join(images_dir, f"decision_tree_{dataset_name.lower()}_accuracy_hist.png")
-    plt.savefig(accuracy_hist_filename)
-    print(f"Saved accuracy histogram to: {accuracy_hist_filename}")
+    test_accuracy_hist_filename = os.path.join(images_dir, f"decision_tree_{dataset_name.lower()}_test_accuracy_hist.png")
+    plt.savefig(test_accuracy_hist_filename)
+    print(f"Saved testing accuracy histogram to: {test_accuracy_hist_filename}")
     plt.close()
 
