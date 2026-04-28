@@ -47,19 +47,20 @@ def load_csv_data(filepath, label_first=True):
     return X_raw, y_raw
 
 datasets_to_run = {
-    "Digits": {"load_func": load_digits_data},
-    "Parkinsons": {"load_func": lambda: load_csv_data("parkinsons.csv", label_first=False)},
-    "Rice": {"load_func": lambda: load_csv_data("rice.csv", label_first=False)},
-    "Credit": {"load_func": lambda: load_csv_data("credit_approval.csv", label_first=False)},
+    # "Digits": {"load_func": load_digits_data},
+    # "Parkinsons": {"load_func": lambda: load_csv_data("parkinsons.csv", label_first=False)},
+    # "Rice": {"load_func": lambda: load_csv_data("rice.csv", label_first=False)},
+    # "Credit": {"load_func": lambda: load_csv_data("credit_approval.csv", label_first=False)},
+    "Valorant": {"load_func": lambda: load_csv_data("valorant_dataset.csv", label_first=True)},
 }
 
 hyperparameter_grid = [
     {"max_depth": 10, "min_gain": 0.01, "min_size_for_split": 5},
-    {"max_depth": 10, "min_gain": 0.05, "min_size_for_split": 10},
-    {"max_depth": 15, "min_gain": 0.01, "min_size_for_split": 5},
-    {"max_depth": 15, "min_gain": 0.05, "min_size_for_split": 10},
-    {"max_depth": 25, "min_gain": 0.01, "min_size_for_split": 5},
-    {"max_depth": 25, "min_gain": 0.05, "min_size_for_split": 10}
+    # {"max_depth": 10, "min_gain": 0.05, "min_size_for_split": 10},
+    # {"max_depth": 15, "min_gain": 0.01, "min_size_for_split": 5},
+    # {"max_depth": 15, "min_gain": 0.05, "min_size_for_split": 10},
+    # {"max_depth": 25, "min_gain": 0.01, "min_size_for_split": 5},
+    # {"max_depth": 25, "min_gain": 0.05, "min_size_for_split": 10}
 ]
 
 ntree_values = [1, 5, 10, 20, 30, 50]
