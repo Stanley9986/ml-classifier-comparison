@@ -51,7 +51,7 @@ datasets_to_run = {
     # "Parkinsons": {"load_func": lambda: load_csv_data("parkinsons.csv", label_first=False)},
     # "Rice": {"load_func": lambda: load_csv_data("rice.csv", label_first=False)},
     # "Credit": {"load_func": lambda: load_csv_data("credit_approval.csv", label_first=False)},
-    "Valorant": {"load_func": lambda: load_csv_data("valorant_dataset.csv", label_first=True)},
+    "Valorant": {"load_func": lambda: load_csv_data("valorant_dataset_500_color.csv", label_first=True)},
 }
 
 hyperparameter_grid = [
