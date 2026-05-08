@@ -101,69 +101,68 @@ def get_kfolds(data, k=5):
 
 
 
-K_vals = list(range(1, 52, 2))
+def main():
+    K_vals = list(range(1, 52, 2))
 
-best_k_per_dataset = {}
-all_results = {}
+    best_k_per_dataset = {}
+    all_results = {}
 
-for dataset_name, config in datasets_to_run.items():
-    print(f"\n################################")
-    print(f"### K search: {dataset_name} ###")
-    X_raw, y_raw = config["load_func"]()
+    for dataset_name, config in datasets_to_run.items():
+        print(f"\n################################")
+        print(f"### K search: {dataset_name} ###")
+        X_raw, y_raw = config["load_func"]()
 
-    df = pd.DataFrame(X_raw)
-    df["class"] = y_raw
-    folds = get_kfolds(df, k=10)
+        df = pd.DataFrame(X_raw)
+        df["class"] = y_raw
+        folds = get_kfolds(df, k=10)
 
-    k_acc, k_acc_std, k_f1 = [], [], []
+        k_acc, k_acc_std, k_f1 = [], [], []
 
-    for k in K_vals:
-        fold_acc, fold_f1 = [], []
-        for i in range(10):
-            test_df  = folds[i]
-            train_df = pd.concat([folds[j] for j in range(10) if j != i]).reset_index(drop=True)
+        for k in K_vals:
+            fold_acc, fold_f1 = [], []
+            for i in range(10):
+                test_df  = folds[i]
+                train_df = pd.concat([folds[j] for j in range(10) if j != i]).reset_index(drop=True)
 
-            X_train = train_df.drop(columns=["class"]).to_numpy(dtype=float)
-            y_train = train_df["class"].to_numpy()
-            X_test  = test_df.drop(columns=["class"]).to_numpy(dtype=float)
-            y_test  = test_df["class"].to_numpy()
+                X_train = train_df.drop(columns=["class"]).to_numpy(dtype=float)
+                y_train = train_df["class"].to_numpy()
+                X_test  = test_df.drop(columns=["class"]).to_numpy(dtype=float)
+                y_test  = test_df["class"].to_numpy()
 
-            X_train_norm, X_test_norm = normalize(X_train, X_test)
-            y_pred = knn_predict(X_train_norm, y_train, X_test_norm, k)
+                X_train_norm, X_test_norm = normalize(X_train, X_test)
+                y_pred = knn_predict(X_train_norm, y_train, X_test_norm, k)
 
-            acc, f1 = calc_metrics(y_test, y_pred)
-            fold_acc.append(acc)
-            fold_f1.append(f1)
+                acc, f1 = calc_metrics(y_test, y_pred)
+                fold_acc.append(acc)
+                fold_f1.append(f1)
 
-        k_acc.append(np.mean(fold_acc))
-        k_acc_std.append(np.std(fold_acc))
-        k_f1.append(np.mean(fold_f1))
-        print(f"k={k}, acc={k_acc[-1]:.4f}, F1={k_f1[-1]:.4f}")
+            k_acc.append(np.mean(fold_acc))
+            k_acc_std.append(np.std(fold_acc))
+            k_f1.append(np.mean(fold_f1))
+            print(f"k={k}, acc={k_acc[-1]:.4f}, F1={k_f1[-1]:.4f}")
 
-    best_idx = int(np.argmax(k_f1))
-    best_k = K_vals[best_idx]
-    best_k_per_dataset[dataset_name] = best_k
-    all_results[dataset_name] = {"k_acc": k_acc, "k_acc_std": k_acc_std, "k_f1": k_f1}
+        best_idx = int(np.argmax(k_f1))
+        best_k = K_vals[best_idx]
+        best_k_per_dataset[dataset_name] = best_k
+        all_results[dataset_name] = {"k_acc": k_acc, "k_acc_std": k_acc_std, "k_f1": k_f1}
 
-    print(f"\n best k for {dataset_name}: {best_k}")
+        print(f"\n best k for {dataset_name}: {best_k}")
+
+    for dataset_name, res in all_results.items():
+        plt.figure(figsize=(10, 5))
+        plt.errorbar(K_vals, res["k_acc"], yerr=res["k_acc_std"], marker="o", linestyle="-", capsize=4, label="Accuracy")
+        plt.plot(K_vals, res["k_f1"], marker="s", linestyle="--", label="F1")
+        plt.title(f"Performance vs k: {dataset_name}")
+        plt.xlabel("k")
+        plt.ylabel("Performance")
+        plt.xticks(K_vals[::2])
+        plt.legend()
+        plt.grid(True)
+
+        path = os.path.join(images_dir, f"knn_{dataset_name.lower()}_k.png")
+        plt.savefig(path, bbox_inches="tight")
+        plt.close()
 
 
-
-# plotting and saving
-for dataset_name, res in all_results.items():
-    # best_k = best_k_per_dataset[dataset_name]
-
-    plt.figure(figsize=(10, 5))
-    plt.errorbar(K_vals, res["k_acc"], yerr=res["k_acc_std"], marker="o", linestyle="-", capsize=4, label="Accuracy")
-    plt.plot(K_vals, res["k_f1"], marker="s", linestyle="--", label="F1")
-    plt.title(f"Performance vs k: {dataset_name}")
-    plt.xlabel("k")
-    plt.ylabel("Performance")
-    plt.xticks(K_vals[::2])
-    plt.legend()
-    plt.grid(True)
-
-    path = os.path.join(images_dir, f"knn_{dataset_name.lower()}_k.png")
-    plt.savefig(path, bbox_inches="tight")
-    # plt.show()
-    plt.close()
+if __name__ == "__main__":
+    main()
